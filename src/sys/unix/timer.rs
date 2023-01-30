@@ -15,6 +15,8 @@ use crate::{
 /// Test docs
 #[derive(Debug, Copy, Clone)]
 pub struct Timer {
+    /// Platforms that support `timerfd` will have a pollable
+    /// file descriptor.
     #[cfg(any(
         target_os = "android",
         target_os = "linux",
@@ -25,6 +27,8 @@ pub struct Timer {
     //duration: Duration,
 }
 
+/// On Linux we can simply delegate the mio::event::Source implementation to the
+/// underlying timerfd file descriptor.
 #[cfg(any(
     target_os = "android",
     target_os = "linux",
@@ -112,36 +116,37 @@ impl Source for Timer {
 impl Timer {
     /// docs
     pub fn new(duration: Duration) -> io::Result<Self> {
-        //let seconds: i32 = duration.as_secs().try_into().or(Err(Error::from(ErrorKind::InvalidInput)))?;
         Self::platform_new(duration)
     }
 
+    /// docs
+    pub fn reset(&mut self, _duration: Duration) -> io::Result<()> {
+        Err(Error::from(ErrorKind::InvalidInput))
+    }
+
+    /// Linux implementation of `Timer:new`.
+    ///
+    /// Initialize the file descriptor with `libc::timerfd_create` and the set the initial timeout +
+    /// interval with `libc::timerfd_settime`.
     #[cfg(any(
         target_os = "android",
         target_os = "linux",
     ))]
     fn platform_new(duration: Duration) -> io::Result<Self> {
-        let timeout = libc::timespec {
-            tv_sec: duration.as_secs().try_into().or(Err(Error::from(ErrorKind::InvalidInput)))?,
-            tv_nsec: 0,
-        };
-        let mut value = libc::itimerspec {
-            it_interval: timeout.clone(),
-            it_value: timeout,
+        let seconds: i64 = duration.as_secs().try_into().or(Err(Error::from(ErrorKind::InvalidInput)))?;
 
-        };
+        // Attempt to init the timerfd
         let timer = syscall!(timerfd_create(libc::CLOCK_MONOTONIC, libc::TFD_NONBLOCK | libc::TFD_CLOEXEC))?;
 
+        // Set the time
+        let timeout = libc::timespec { tv_sec: seconds, tv_nsec: 0};
+        let mut value = libc::itimerspec { it_interval: timeout, it_value: timeout};
         syscall!(timerfd_settime(timer, libc::TFD_TIMER_ABSTIME, &mut value as _, core::ptr::null_mut()))?;
+
+        // Complete init
         Ok(Self {
             inner: timer,
             //duration,
         })
-    }
-
-    /// docs
-    pub fn reset(&mut self, _duration: Duration) -> io::Result<()> {
-        
-        Err(Error::from(ErrorKind::InvalidInput))
     }
 }
