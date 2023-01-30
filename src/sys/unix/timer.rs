@@ -17,6 +17,9 @@ use crate::{
 /// On Linux the underlying implementation is based on `timerfd`. On `kqueue` based systems
 /// `EVFILT_TIMER` is used.
 ///
+/// The timer won't begin until it is registered with a [`Poll`](`crate::Poll`) instance. This
+/// is required to keep behavior consistent across platforms.
+///
 /// # Examples
 ///
 /// Basic usage.
