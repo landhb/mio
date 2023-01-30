@@ -76,7 +76,7 @@ cfg_not_os_poll! {
     #[cfg(unix)]
     cfg_any_os_ext! {
         mod unix;
-        pub use self::unix::SourceFd;
+        pub use self::unix::{SourceFd, Timer};
     }
 
     #[cfg(unix)]

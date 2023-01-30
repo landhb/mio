@@ -56,6 +56,8 @@ cfg_os_poll! {
 
     cfg_os_ext! {
         pub(crate) mod pipe;
+        mod timer;
+        pub use self::timer::Timer;
     }
 }
 
@@ -67,6 +69,8 @@ cfg_not_os_poll! {
 
     cfg_any_os_ext! {
         mod sourcefd;
+        mod timer;
         pub use self::sourcefd::SourceFd;
+        pub use self::timer::Timer;
     }
 }

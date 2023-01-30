@@ -83,6 +83,7 @@ pub mod unix {
     }
 
     pub use crate::sys::SourceFd;
+    pub use crate::sys::Timer;
 }
 
 #[cfg(all(windows, feature = "os-ext"))]
