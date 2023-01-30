@@ -12,7 +12,43 @@ use crate::{
 };
 
 
-/// Test docs
+/// A timer that allows time-based waking of [`Poll`](`crate::Poll`).
+///
+/// On Linux the underlying implementation is based on `timerfd`. On `kqueue` based systems
+/// `EVFILT_TIMER` is used.
+///
+/// # Examples
+///
+/// Basic usage.
+///
+#[cfg_attr(
+    all(feature = "os-poll", feature = "net", feature = "os-ext"),
+    doc = "```"
+)]
+#[cfg_attr(
+    not(all(feature = "os-poll", feature = "net", feature = "os-ext")),
+    doc = "```ignore"
+)]
+/// # use std::error::Error;
+/// # fn main() -> Result<(), Box<dyn Error>> {
+/// use mio::unix::Timer;
+/// use mio::{Poll, Token, Interest};
+/// use std::time::Duration;
+///
+/// // Construct a new `Poll` handle
+/// let poll = Poll::new()?;
+///
+/// // Init a timer to alert every 60 seconds
+/// let mut timer = Timer::new(Duration::new(60, 0))?;
+///
+/// // Register the timer with the Poll instance
+/// poll.registry().register(
+///     &mut timer,
+///     Token(0),
+///     Interest::READABLE)?;
+/// #     Ok(())
+/// # }
+/// ```
 #[derive(Debug, Copy, Clone)]
 pub struct Timer {
     /// Platforms that support `timerfd` will have a pollable
